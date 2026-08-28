@@ -1,0 +1,42 @@
+{
+  "name": "akela",
+  "version": "0.1.0",
+  "description": "A deterministic compiler over rectified context \u2014 a learning layer that grows beside your markdown knowledge base, under your supervision.",
+  "license": "MIT",
+  "author": "Timothy Han",
+  "bin": {
+    "akela": "bin/akela.js"
+  },
+  "main": "lib/compile.js",
+  "files": [
+    "bin",
+    "lib",
+    "domains",
+    "docs/DESIGN.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node test/run.js"
+  },
+  "keywords": [
+    "context",
+    "compiler",
+    "markdown",
+    "knowledge-base",
+    "agent",
+    "learning",
+    "expert-in-the-loop"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timothyhan/akela.git"
+  },
+  "homepage": "https://github.com/timothyhan/akela#readme",
+  "bugs": {
+    "url": "https://github.com/timothyhan/akela/issues"
+  }
+}

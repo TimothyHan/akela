@@ -1,0 +1,17 @@
+{
+  "name": "qa",
+  "activities": ["qa", "test-cases", "test-plan", "review-ticket", "verify-fix", "exploratory", "e2e-setup", "e2e-pom", "e2e-write", "improve", "setup", "start", "eval"],
+  "profile": {
+    "surface":     [ { "exists": "playwright/AUTOMATION.md", "value": "web" }, { "value": "unknown" } ],
+    "pom":         [ { "glob": "playwright/pom/*.page.ts", "value": "exists" },
+                     { "exists": "playwright/pom", "value": "partial" },
+                     { "exists": "playwright", "value": "none" },
+                     { "value": "n/a" } ],
+    "ticket_kind": [ { "task": "^(BUG|DEFECT)-", "value": "bug" }, { "value": "unknown" } ]
+  },
+  "fingerprints": ["locator-not-found", "ac-unmapped", "spec-flaky", "ci-step-failed", "env-unreachable", "auth-failed", "fixture-missing", "assertion-mismatch", "tool-unavailable"],
+  "statuses": ["DONE", "DONE_WITH_CONCERNS", "BLOCKED", "NEEDS_CONTEXT"],
+  "scratchpad": ["Plan", "State", "Findings", "Candidate learnings"],
+  "learnings": "features-kb/LEARNINGS.md",
+  "runs": ".qa-reports/runs"
+}

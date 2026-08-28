@@ -1,0 +1,7 @@
+{
+  "name": "default",
+  "profile": {},
+  "fingerprints": ["wrong-answer", "missing-context", "stale-rule", "tool-failed", "env-unreachable"],
+  "statuses": ["DONE", "DONE_WITH_CONCERNS", "BLOCKED", "NEEDS_CONTEXT"],
+  "scratchpad": ["Plan", "State", "Findings", "Candidate learnings"]
+}
