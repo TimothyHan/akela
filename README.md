@@ -25,6 +25,7 @@ Akela has two users with different jobs: **you** set it up and curate; **your ag
 npx akela init --knowledge wiki   # akela.json + LEARNINGS.md + the three agent protocols (PROTOCOL, ONBOARD, CURATE)
 #   --knowledge <dir>  path to your existing markdown folder — wiki/, docs/, kb/, notes/, anything
 #   --domain <pack>    optional domain pack name or JSON path (default: "default")
+#   RAG is not an init flag — plug yours in after, one line in akela.json ("RAG, if you have one" below)
 npx akela index                   # every addressable section: <NS>-<file>#<id>  tier  scope
 ```
 
