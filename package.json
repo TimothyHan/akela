@@ -1,7 +1,7 @@
 {
   "name": "akela",
   "version": "0.1.1",
-  "description": "A deterministic compiler over rectified context \u2014 a learning layer that grows beside your markdown knowledge base, under your supervision.",
+  "description": "A deterministic context compiler for AI agents \u2014 evidence-driven context engineering beside your markdown knowledge base: agents propose, evidence gates, you decide.",
   "license": "MIT",
   "author": "Timothy Han",
   "bin": {
@@ -23,11 +23,16 @@
     "test": "node test/run.js"
   },
   "keywords": [
+    "context-compiler",
+    "context-engineering",
+    "ai-agents",
+    "agent-memory",
+    "knowledge-base",
+    "llm",
+    "rag",
+    "markdown",
     "context",
     "compiler",
-    "markdown",
-    "knowledge-base",
-    "agent",
     "learning",
     "expert-in-the-loop"
   ],
