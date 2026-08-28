@@ -15,6 +15,8 @@ Your time budget: about an hour at setup, then roughly ten minutes per review. T
 
 ```bash
 npx akela init --knowledge wiki     # akela.json + LEARNINGS.md + the three agent protocols (PROTOCOL, ONBOARD, CURATE)
+#   --knowledge <dir>  any existing markdown folder — wiki/, docs/, kb/, notes/ — indexed as-is, no edits needed
+#   --domain <pack>    optional: a domain pack name or JSON path (see domains/README.md); default "default"
 npx akela index                     # lists every addressable section
 ```
 
