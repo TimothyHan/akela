@@ -1,6 +1,6 @@
 {
   "name": "akela",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A deterministic compiler over rectified context \u2014 a learning layer that grows beside your markdown knowledge base, under your supervision.",
   "license": "MIT",
   "author": "Timothy Han",
