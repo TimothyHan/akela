@@ -2,6 +2,8 @@
 
 **A deterministic compiler over rectified context.**
 
+[![tests](https://github.com/TimothyHan/akela/actions/workflows/ci.yml/badge.svg)](https://github.com/TimothyHan/akela/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/akela)](https://www.npmjs.com/package/akela) ![node](https://img.shields.io/badge/node-%E2%89%A518-brightgreen) ![deps](https://img.shields.io/badge/dependencies-0-brightgreen)
+
 Akela is a learning layer that grows beside your markdown knowledge base — a wiki, a references folder, a team playbook — and a compiler that hands an AI agent exactly the slice it needs for each run. Agents *propose* what they learned. Evidence *gates* what holds up. Someone *decides* what becomes knowledge — a domain expert, or, unattended, a curator agent working only from the counts.
 
 Akela is not a RAG. If you already use one, keep it — retrieved results enter the slice as just another knowledge source, tracked like the rest.
