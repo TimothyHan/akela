@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.2 — 2026-08-28
+
+Docs and metadata only — no engine changes.
+
+- FAQ (`docs/faq.md`) from real first-use questions; linked from the README.
+- CI matrix (Node 18/20/22/24) and README badges; CHANGELOG introduced.
+- Recordable demo script (`scripts/demo.sh`).
+- Quick start clarifies `--knowledge` (any markdown folder path), `--domain`,
+  and that RAG is post-init config.
+- npm description/keywords carry "context compiler" / "context engineering".
+
 ## 0.1.1 — 2026-08-28
 
 First release.
