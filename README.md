@@ -43,9 +43,28 @@ The question "was the stale rule in front of the agent?" is answered by a file, 
 
 The full vocabulary — scopes, tiers, learnings, fingerprints, domain packs — lives in the [docs](docs/); every term is one of these three primitives wearing work clothes.
 
-**Honest limits, measured:** in our experiments, dumping the *entire* knowledge base into context matched or slightly beat compiled slices on raw accuracy — if that's all you measure and tokens are free, you don't need this tool. What you get instead is a knowledge base that is *provably clean* rather than attentionally lucky, context that scales with the task instead of the wiki, and an audit trail for both. And autonomous curation is experimental by evidence, not modesty: a closed loop sometimes sincerely distrusts a *correct* rule, and no arithmetic can tell that apart from a bad one — which is why a reviewer holds the pen.
-
 Born inside a QA automation tool, where the loop ran on real work first; extracted and generalized so any domain — support, ops, research, QA — can run it. That tool ([QABuddy](https://github.com/timothyhan/QABuddy)) is now Akela's reference consumer, running its full test suite against this engine in CI. Zero dependencies, Node ≥ 18.
+
+## Measured, not promised
+
+The whole claim set was put through our experiments: three isolated agents — a trainee that works tasks, a curator that reads `akela stats`, a silent script that updates the source when the world shifts — and a deterministic grader outside the loop, run across many conditions and seeds with every result archived. The full experiment program (harness, task beds, result archives, findings) will be published separately.
+
+The buyer's table — files / maintained wiki / RAG, each **without → with** Akela, same bed, same model, same grader, after the rules change:
+
+| | files | maintained wiki | RAG |
+|---|---|---|---|
+| accuracy | 0.53 → 0.51 | 0.96 → 0.90 | 0.89 → 0.81 |
+| stale rules in context | 26/26 → 21/26 | **17/26 → 2/26** | 23/26 → 21/26 |
+| context tokens / task | 35,690 → **139** | 35,773 → **138** | 35,772 → **201** |
+| $ / correct answer | $2.37 → **$1.48** | $1.17 → **$0.81** | $1.45 → **$1.02** |
+
+Stated honestly, in the order the data forces:
+
+- **Maintenance beats tooling.** The biggest jump anywhere is unmaintained files → maintained wiki (0.53 → 0.96), from nothing but someone keeping the source current. Akela's job is making that affordable and provable, not replacing it.
+- **On raw accuracy, dumping everything wins every pair by a hair** — and stayed flat to 353k tokens/task in a scaling test. If today's accuracy is all you measure and tokens are free, you don't need this tool.
+- **Akela wins everything structural, in every pair:** context 257× smaller at any knowledge-base size, better cost per correct answer, and a knowledge base that is *provably* clean (2/26 → 0/26 stale at 10× scale) instead of attentionally lucky (the dump carried stale rules in 17–19 of 26 contexts at every scale and dodged them until it didn't).
+- **Unlearning works unattended; relearning needs the source.** With accept/reject alone the trainee ends, honestly, at "rule absent". Corrections that arrive through the wiki are adopted without anyone being told (r=0 on trusted classes); retrieved corrections graduate into the wiki through the promotion path.
+- **The residual failure is epistemic, reproduced 3/3:** a correct, freshly-updated rule can be retired on sincere wrong distrust — accurate quotes, correct attribution, honest counting, wrong outcome. Every mechanism checks whether evidence is honest; none can check whether it is right. That is why the curator exists.
 
 ## Quick start
 
@@ -148,27 +167,6 @@ A pack says what kind of work happens here: the activities, the deterministic pr
 ### RAG, if you have one
 
 A retriever is any command. It gets `{activity, task, profile}` on stdin and returns `[{id, heading, text}]`. Its items enter the slice as `EXT-<name>#<id>`, tier `context`, after the floor, marked `via: retriever:<name>` — and they are cited and counted like every other source. Akela never lets a retriever remove or reorder anything; it lets the retriever *audition*, and your run logs decide whether what it surfaced was ever applied.
-
-## Measured, not promised
-
-The whole claim set was put through our experiments: three isolated agents — a trainee that works tasks, a curator that reads `akela stats`, a silent script that updates the source when the world shifts — and a deterministic grader outside the loop, run across many conditions and seeds with every result archived. The full experiment program (harness, task beds, result archives, findings) will be published separately.
-
-The buyer's table — files / maintained wiki / RAG, each **without → with** Akela, same bed, same model, same grader, after the rules change:
-
-| | files | maintained wiki | RAG |
-|---|---|---|---|
-| accuracy | 0.53 → 0.51 | 0.96 → 0.90 | 0.89 → 0.81 |
-| stale rules in context | 26/26 → 21/26 | **17/26 → 2/26** | 23/26 → 21/26 |
-| context tokens / task | 35,690 → **139** | 35,773 → **138** | 35,772 → **201** |
-| $ / correct answer | $2.37 → **$1.48** | $1.17 → **$0.81** | $1.45 → **$1.02** |
-
-Stated honestly, in the order the data forces:
-
-- **Maintenance beats tooling.** The biggest jump anywhere is unmaintained files → maintained wiki (0.53 → 0.96), from nothing but someone keeping the source current. Akela's job is making that affordable and provable, not replacing it.
-- **On raw accuracy, dumping everything wins every pair by a hair** — and stayed flat to 353k tokens/task in a scaling test. If today's accuracy is all you measure and tokens are free, you don't need this tool.
-- **Akela wins everything structural, in every pair:** context 257× smaller at any knowledge-base size, better cost per correct answer, and a knowledge base that is *provably* clean (2/26 → 0/26 stale at 10× scale) instead of attentionally lucky (the dump carried stale rules in 17–19 of 26 contexts at every scale and dodged them until it didn't).
-- **Unlearning works unattended; relearning needs the source.** With accept/reject alone the trainee ends, honestly, at "rule absent". Corrections that arrive through the wiki are adopted without anyone being told (r=0 on trusted classes); retrieved corrections graduate into the wiki through the promotion path.
-- **The residual failure is epistemic, reproduced 3/3:** a correct, freshly-updated rule can be retired on sincere wrong distrust — accurate quotes, correct attribution, honest counting, wrong outcome. Every mechanism checks whether evidence is honest; none can check whether it is right. That is why the curator exists.
 
 ## Design
 
