@@ -47,4 +47,5 @@ world; it cannot make the evidence easier to satisfy.
 | `fingerprints` | the closed vocabulary of failure classes for `akela fp` | recurrence-based falsification evidence |
 | `statuses` | allowed values for `akela log outcome` | outcome tracking, scoring eligibility |
 | `scratchpad` | section headings of the per-run scratchpad file | run scaffolding |
+| `aliasPrefixes` | prefixes stripped off invoked activity names (`qa-exploratory` → `exploratory`) — agents pass the name they invoked, which need not equal the activity name | compile, run-id |
 | `knowledge`, `learnings`, `runs`, `idTag` | path defaults a tool may preset for its users | config layering |

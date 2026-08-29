@@ -224,18 +224,34 @@ function cmdVet(args) {
   process.stderr.write(`${acc}/${out.length} accepted\n`);
 }
 
+// Agents pass the name they invoked, and the invoked name need not equal the activity name
+// (found live 2026-08-27: a model passed its installed command name for four straight runs and
+// compiled empty slices silently). aliasPrefixes maps invoked names onto the activity vocabulary —
+// deterministic prefix stripping, never fuzzy matching.
+function resolveActivity(c, raw) {
+  if (!raw) return { activity: raw, aliased: false };
+  // A declared activity name is never an alias — a pack with prefix "qa-" may still have a real
+  // activity "qa-review"; stripping it would misroute a canonical call.
+  if (c.activities && c.activities.includes(raw)) return { activity: raw, aliased: false };
+  for (const pre of c.aliasPrefixes || []) {
+    if (raw.startsWith(pre) && raw.length > pre.length) return { activity: raw.slice(pre.length), aliased: true, raw };
+  }
+  return { activity: raw, aliased: false };
+}
+
 function cmdRunId(args) {
   const c = cfg();
-  const activity = opt(args, 'activity', 'skill');
+  const { activity, aliased, raw } = resolveActivity(c, opt(args, 'activity', 'skill'));
   if (!activity) die('run-id requires --activity <name>');
   if (c.activities && !c.activities.includes(activity)) die(`unknown activity "${activity}" — this domain declares: ${c.activities.join(', ')}`);
   const r = require('../lib/log').startRun(c, activity, opt(args, 'task', 'ticket'));
   process.stdout.write(r.run + '\n');
+  if (aliased) process.stdout.write(`  activity alias: ${raw} → ${activity}\n`);
 }
 
 function cmdCompile(args) {
   const c = cfg();
-  const activity = opt(args, 'activity', 'skill');
+  const { activity, aliased, raw } = resolveActivity(c, opt(args, 'activity', 'skill'));
   if (!activity) die('compile requires --activity <name>');
   const r = require('../lib/compile').compile(c, activity, opt(args, 'task', 'ticket'), { everything: !!args.everything });
   // Drift notice: new derive-mode pages that no scope claims are invisible to agents. Compile is the
@@ -243,7 +259,18 @@ function cmdCompile(args) {
   const { index: idx } = require('../lib/index').build(c);
   const unscoped = Object.values(idx || {}).filter(e => e.derived && e.scope.includes('all') && e.tier !== 'must').length;
   process.stdout.write(`${config.rel(r.slicePath)}\n`);
+  // Notices come AFTER the path: the first line of compile output is a contract (agents read it as the slice path).
+  if (aliased) process.stdout.write(`  activity alias: ${raw} → ${activity}\n`);
   if (unscoped) process.stdout.write(`  note: ${unscoped} unscoped section${unscoped === 1 ? '' : 's'} (derive-mode, never packed) — \`akela stats\` lists them\n`);
+  // An empty slice is almost always a naming problem, never silently fine (caught live 2026-08-27:
+  // four runs proceeded unguided on a misnamed activity). Warn loudly; exit 0 — a legitimately empty
+  // project must not fail, and the empty compiled event is itself evidence of the misfire.
+  if (r.sources.length === 0) {
+    const known = new Set();
+    for (const e of Object.values(idx || {})) for (const sc of e.scope) if (sc !== 'all') known.add(sc);
+    for (const l of require('../lib/learnings').parse(c)) if (l.status === 'active') for (const sc of l.scope) if (sc !== 'all') known.add(sc);
+    process.stderr.write(`akela: warning — 0 sources: no section or active learning is scoped to activity '${activity}'. Known scope tokens: ${[...known].sort().join(', ') || '(none)'}\n`);
+  }
   process.stdout.write(`  run ${r.run.run} · ${r.sources.length} sources (${r.sources.filter(x => x.tier === 'must').length} must, ${r.sources.filter(x => x.tier === 'lrn').length} learnings${r.sources.some(x => x.via && x.via.startsWith('retriever')) ? `, ${r.sources.filter(x => x.via && x.via.startsWith('retriever')).length} retrieved` : ''}) · ${r.used} lines · scratchpad ${config.rel(r.scratch)}\n`);
 }
 

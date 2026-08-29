@@ -232,6 +232,28 @@ function testGeneric() {
     // strict root refuses untagged headings
     fs.writeFileSync(path.join(p.tmp, 'akela.json'), JSON.stringify({ domain: 'default', knowledge: [{ path: 'wiki', namespace: 'WIKI' }] }));
     check(/has no <!-- akela: id=/.test(p.fails(['compile', '--activity', 'support']) || ''), 'strict (refuse) mode: an untagged heading is a loud error');
+    // alias normalization + the silent-empty-slice guard (bug found live in a downstream project
+    // 2026-08-27: the model passed the name it invoked, not the activity name; four 0-source
+    // compiles proceeded silently)
+    const al = project({ domain: 'default', knowledge: [{ path: 'wiki', namespace: 'WIKI' }], aliasPrefixes: ['qa-'] },
+      { 'wiki/tone.md': '# Tone\n<!-- akela: scope=support tier=must -->\n\n## Always\n<!-- akela: id=always -->\nUse the name.\n' });
+    try {
+      const aliased = al.run(['compile', '--activity', 'qa-support', '--task', 'T-1']);
+      check(/activity alias: qa-support → support/.test(aliased), 'aliased compile prints the activity-alias notice');
+      const canon = al.run(['compile', '--activity', 'support', '--task', 'T-2']);
+      const m1 = al.manifest(path.join(al.tmp, aliased.split('\n')[0])), m2 = al.manifest(path.join(al.tmp, canon.split('\n')[0]));
+      check(m1.ids.includes('WIKI-tone#always') && JSON.stringify(m1.ids.sort()) === JSON.stringify(m2.ids.sort()), 'aliased compile packs the identical source set as the canonical name');
+      const bad = require('child_process').spawnSync(process.execPath, [BIN, 'compile', '--activity', 'no-such-thing', '--task', 'T-3'], { env: { ...process.env, AKELA_CWD: al.tmp }, encoding: 'utf8' });
+      check(bad.status === 0 && /warning — 0 sources/.test(bad.stderr), 'unknown activity warns loudly on stderr (exit stays 0)');
+      check(/Known scope tokens: support/.test(bad.stderr), 'the 0-source warning lists the known scope tokens');
+      const good = require('child_process').spawnSync(process.execPath, [BIN, 'compile', '--activity', 'support', '--task', 'T-4'], { env: { ...process.env, AKELA_CWD: al.tmp }, encoding: 'utf8' });
+      check(good.status === 0 && !/warning — 0 sources/.test(good.stderr), 'a normal non-empty compile prints no warning');
+      fs.writeFileSync(path.join(al.tmp, 'akela.json'), JSON.stringify({ domain: 'default', knowledge: [{ path: 'wiki', namespace: 'WIKI' }], aliasPrefixes: ['qa-'], activities: ['qa-review', 'support'] }));
+      fs.appendFileSync(path.join(al.tmp, 'wiki', 'tone.md'), '\n## Review rule\n<!-- akela: id=review-rule scope=qa-review tier=must -->\nCheck twice.\n');
+      const declared = al.run(['compile', '--activity', 'qa-review', '--task', 'T-5']);
+      check(!/activity alias:/.test(declared) && al.manifest(path.join(al.tmp, declared.split('\n')[0])).ids.includes('WIKI-tone#review-rule'), 'a declared activity that happens to carry a prefix is never treated as an alias');
+    } finally { al.rm(); }
+
     // init
     const q = project(null, { 'docs/a.md': '# A\n\n## One\ntext\n' });
     try {

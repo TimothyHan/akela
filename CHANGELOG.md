@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.3 — 2026-08-28
+
+An empty slice is a naming problem until proven otherwise.
+
+- **Loud 0-source warning**: `compile` that matches nothing now warns on stderr,
+  naming the activity and listing the known scope tokens (exit stays 0; the
+  empty `compiled` event is kept as evidence). Found live downstream: an agent
+  passed the name it *invoked* instead of the activity name and ran four tasks
+  on silently empty slices.
+- **`aliasPrefixes`** (config/pack key): deterministic prefix stripping maps
+  invoked names onto the activity vocabulary (`qa-exploratory` → `exploratory`),
+  with an `activity alias:` notice printed after the path line. Applies to
+  `compile` and `run-id`. Never fuzzy.
+- Compile's first output line remains, by contract, the slice path — all
+  notices print below it. 5 new tests (125 total).
+
 ## 0.1.2 — 2026-08-28
 
 Docs and metadata only — no engine changes.

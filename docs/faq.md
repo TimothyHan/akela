@@ -16,7 +16,7 @@ Scoping is required for Akela to do anything — but "required" ≠ "you, typing
 
 ### I have a huge wiki — will scoping take forever?
 
-No: cost scales with what agents need, not wiki size. The onboarding protocol tells the agent to triage from `akela index` (headings only, no bodies), use one file-level tag instead of forty section tags, and work one activity per review. Your review time is the bottleneck, and it comes in ten-minute portions. Meanwhile the compiled slice stays ~150 tokens whether the wiki is 36k or 365k tokens — measured.
+No: cost scales with what agents need, not wiki size. The onboarding protocol tells the agent to triage from `akela index` (headings only, no bodies), use one file-level tag instead of forty section tags, and work one activity per review. Your review time is the bottleneck, and it comes in ten-minute portions. Meanwhile slice size scales with the rules relevant to a task, not with wiki size — in our test bed that meant ~150 tokens per task against a 365k-token wiki; your ratio will differ, but the shape holds.
 
 ### Once installed, does my agent automatically use Akela?
 
@@ -36,7 +36,7 @@ It doesn't rank — deliberately. Selection is set logic: scope match + tier, wi
 
 ### If accuracy is similar to just stuffing everything in context, why use it?
 
-Our own measurements say the dump wins raw accuracy by a hair — we print that. What you buy: context 250× smaller at any knowledge-base size (no window ceiling, no cache-luck economics), a knowledge base that's *provably* clean instead of attentionally lucky (the dump carried stale rules in ~2/3 of contexts and dodged them until it didn't), lower cost per correct answer, and 150-token slices a human can audit. If today's accuracy is all you measure and tokens are free, you don't need this tool.
+Our own measurements say the dump wins raw accuracy by a hair — we print that. What you buy: context 250× smaller at any knowledge-base size (no window ceiling, no cache-luck economics), a knowledge base that's *provably* clean instead of attentionally lucky (the dump carried stale rules in ~2/3 of contexts and dodged them until it didn't), lower cost per correct answer, and slices small enough for a human to audit (ours ran ~150 tokens; sized by relevant rules, not by wiki size). If today's accuracy is all you measure and tokens are free, you don't need this tool.
 
 ### Can it run fully autonomously?
 
@@ -45,6 +45,10 @@ The loop unlearns, adopts corrections, and polices citation honesty on its own �
 ### Do I need a domain pack?
 
 Probably not. Every pack field can live inline in `akela.json`; the `default` pack is a generic floor. Extract a pack file when a second project shares the vocabulary, or when you're shipping a tool on top of Akela. See [../domains/README.md](../domains/README.md).
+
+### My agent compiled an empty slice — why?
+
+Almost always a naming mismatch: the agent passed the name it *invoked* (a command, a skill) instead of the activity name your scopes use. Since 0.1.3 an empty compile warns loudly on stderr and lists the known scope tokens; if your tool's command names carry a prefix, set `aliasPrefixes` (e.g. `["qa-"]`) and the prefix is stripped deterministically, with a visible `activity alias:` notice.
 
 ### What's the footprint?
 
