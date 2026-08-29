@@ -4,18 +4,48 @@
 
 [![tests](https://github.com/TimothyHan/akela/actions/workflows/ci.yml/badge.svg)](https://github.com/TimothyHan/akela/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/akela)](https://www.npmjs.com/package/akela) ![node](https://img.shields.io/badge/node-%E2%89%A518-brightgreen) ![deps](https://img.shields.io/badge/dependencies-0-brightgreen)
 
-Akela is a **context compiler** for AI agents and a learning layer that grows beside your markdown knowledge base — a wiki, a references folder, a team playbook. It compiles exactly the context slice an agent needs for each run, and keeps per-rule evidence that decides what stays knowledge. Agents *propose* what they learned. Evidence *gates* what holds up. Someone *decides* what becomes knowledge — a domain expert, or, unattended, a curator agent working only from the counts.
+Akela is a **context compiler** for AI agents: it turns your existing markdown knowledge base — a wiki, a references folder, a team playbook — into a bounded, reproducible context slice per task, and uses evidence from agent runs to govern what that knowledge becomes.
 
-Akela is not a RAG. If you already use one, keep it — retrieved results enter the slice as just another knowledge source, tracked like the rest.
+Three tools, three different questions:
 
-It is the opposite of autonomous agent memory. Nothing here writes your knowledge base, ranks it by similarity, or learns behind your back:
+> **RAG** asks: *what information is probably relevant?*
+> **Agent memory** asks: *what should the agent remember?*
+> **Akela** asks: *what knowledge is this agent authorized to use for this task — and what evidence justifies changing that knowledge?*
 
-- **Deterministic selection.** Same inputs → same slice, every time. No embeddings, no LLM step. Every compile writes a manifest of what was packed *and what was dropped, and why*.
-- **Evidence, not recurrence.** A learning becomes a promotion candidate when runs *applied* it (≥ 3, across ≥ 3 runs) and nothing *contradicted* it. A learning gets flagged as falsified when runs contradict it or the failure it claimed to prevent happens again.
-- **Supervised by design; unattended with eyes open.** With a person in the loop, promotion and retirement are human edits informed by the counts — this is the validated configuration. A curator agent *can* make the same edits from the same counts, and in our experiments the unattended loop unlearned, adopted corrections, and policed citation honesty entirely on its own — but a 3-seed replication also showed it sometimes retires a correct, freshly-updated rule on sincere wrong distrust, because no arithmetic inside a closed loop can tell a bad rule correctly distrusted from a good rule wrongly distrusted. Treat autonomous curation as experimental; the counts are the recommendation, a reviewer is the decision.
-- **Your wiki stays yours.** Akela indexes it; it never rewrites it. An existing markdown folder plugs in with zero edits.
+If you already have a RAG, keep it: retrieved results enter the slice as just another tracked source.
 
-Born inside a QA automation tool, where the loop ran on real work first; extracted and generalized so any domain — support, ops, research, QA — can run it. Zero dependencies, Node ≥ 18.
+## Three primitives
+
+Everything in Akela is an implementation of one of these:
+
+**1 · Knowledge** — what your team believes, in markdown you own. Wiki sections, proposed learnings, retrieved notes. Akela indexes it and never writes it.
+
+**2 · Compilation** — what the agent is allowed to know for *this* task. Deterministic set logic (no embeddings, no LLM step): same inputs, same slice, byte for byte. Every compile opens with a manifest — the audit trail of what was packed **and what was dropped, with reasons**. This is a real one:
+
+```
+---
+manifest: 1
+run: refund-T-4821-15816c
+activity: refund
+compiler: akela 0.1.4   domain: default   scoring: off
+sources:
+  - id: WIKI-refunds#approval   tier: must   lines: 2
+  - id: LRN-20260829-01   tier: lrn   lines: 3
+  - id: WIKI-refunds#method   tier: should   lines: 2
+dropped:
+  - id: WIKI-shipping#carriers   reason: general-scope
+---
+```
+
+The question "was the stale rule in front of the agent?" is answered by a file, not a guess.
+
+**3 · Evidence** — what happened when the agent used that knowledge. The agent reports what it *applied* and what the outcome *contradicted*; an append-only, content-hashed log accumulates a record per rule. Rules that keep failing are flagged **falsified** — the mechanism no memory tool ships — and provably stop appearing. Rules that keep proving out become promotion candidates. A curator (you, or an agent whose edits you review) reads the counts and decides; nothing changes your knowledge base silently.
+
+The full vocabulary — scopes, tiers, learnings, fingerprints, domain packs — lives in the [docs](docs/); every term is one of these three primitives wearing work clothes.
+
+**Honest limits, measured:** in our experiments, dumping the *entire* knowledge base into context matched or slightly beat compiled slices on raw accuracy — if that's all you measure and tokens are free, you don't need this tool. What you get instead is a knowledge base that is *provably clean* rather than attentionally lucky, context that scales with the task instead of the wiki, and an audit trail for both. And autonomous curation is experimental by evidence, not modesty: a closed loop sometimes sincerely distrusts a *correct* rule, and no arithmetic can tell that apart from a bad one — which is why a reviewer holds the pen.
+
+Born inside a QA automation tool, where the loop ran on real work first; extracted and generalized so any domain — support, ops, research, QA — can run it. That tool ([QABuddy](https://github.com/timothyhan/QABuddy)) is now Akela's reference consumer, running its full test suite against this engine in CI. Zero dependencies, Node ≥ 18.
 
 ## Quick start
 
@@ -146,7 +176,11 @@ Stated honestly, in the order the data forces:
 
 ## Status
 
-`0.1.0` — engine extracted, generalized, and hardened by the experiment program; 120-check test suite. The evidence loop is version-scoped (blame binds to the content hash a run actually saw; rewrites start clean), the capture gate is Unicode-aware arithmetic validated against an out-of-domain Korean corpus and an adversarial bed, and a byte-level replay showed the extracted engine reproducing its parent tool's real recorded compile slices exactly. Every non-obvious design decision was forced by an observed failure and is recorded with its reason in [docs/DESIGN.md](docs/DESIGN.md) §5. Known open items: an evidence-only `stats` view for large knowledge bases (the full table grows with corpus size), tombstones for values removed by page edits, and a promotion bar that requires surviving disconfirmation — the last two are the research frontier the replication named.
+`0.1.4` — engine extracted, generalized, and hardened by the experiment program and by its first real consumer (QABuddy runs its full 1,275-check suite against Akela in CI); 139-check test suite, ubuntu + windows × Node 18–24. The evidence loop is version-scoped (blame binds to the content hash a run actually saw; rewrites start clean), the capture gate is Unicode-aware arithmetic validated against an out-of-domain Korean corpus and an adversarial bed, and a byte-level replay showed the extracted engine reproducing its parent tool's real recorded compile slices exactly. Every non-obvious design decision was forced by an observed failure and is recorded with its reason in [docs/DESIGN.md](docs/DESIGN.md) §5. Known open items: an evidence-only `stats` view for large knowledge bases (the full table grows with corpus size), tombstones for values removed by page edits, and a promotion bar that requires surviving disconfirmation — the last two are the research frontier the replication named.
+
+---
+
+**The thesis, in one line:** AI agents are probabilistic — the knowledge system surrounding them doesn't have to be. Akela is deterministic control over what enters an agent's context, an audit trail for every decision, and an evidence-governed path for changing the knowledge underneath.
 
 ## License
 
