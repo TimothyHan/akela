@@ -169,6 +169,7 @@ function cmdCheck(args) {
   const c = cfg();
   const compileMod = require('../lib/compile');
   const index = compileMod.loadIndex(c);
+  const { excluded } = require('../lib/index').build(c); // exclusion must be visible, never silent
   const overridden = compileMod.applyScopeOverrides(c, index);
   const r = c.compiler.retrievers;
   if (r !== undefined) { if (!Array.isArray(r)) die('compiler.retrievers must be an array'); r.forEach((x, i) => { if (!x || typeof x.name !== 'string' || !/^[a-z0-9-]+$/.test(x.name) || typeof x.cmd !== 'string' || !x.cmd.trim()) die(`compiler.retrievers[${i}]: needs a kebab-case "name" and a "cmd"`); }); }
@@ -198,8 +199,9 @@ function cmdCheck(args) {
   const vetMod = require('../lib/vet');
   const restating = learn.filter(l => l.status === 'active').map(l => ({ l, hit: vetMod.restates(c, l, index) })).filter(x => x.hit);
   if (restating.length) process.stderr.write(`akela: warning — learnings that restate a section (dead weight; retire or merge): ${restating.map(x => `${x.l.id} → ${x.hit.id} (${x.hit.score})`).join(', ')}\n`);
-  if (args.json) { process.stdout.write(JSON.stringify({ ok: true, sections: Object.keys(index).length, overrides: overridden.size, learnings: learn.length, active: learn.filter(l => l.status === 'active').length }) + '\n'); return; }
-  process.stdout.write(`ok — ${Object.keys(index).length} sections across ${c.roots.length} root${c.roots.length === 1 ? '' : 's'}, ${overridden.size} scope override${overridden.size === 1 ? '' : 's'}, ${learn.length} learnings (${learn.filter(l => l.status === 'active').length} active)\n`);
+  if (args.json) { process.stdout.write(JSON.stringify({ ok: true, sections: Object.keys(index).length, overrides: overridden.size, learnings: learn.length, active: learn.filter(l => l.status === 'active').length, ...(Object.keys(excluded || {}).length ? { excluded } : {}) }) + '\n'); return; }
+  const nEx = Object.values(excluded || {}).reduce((n, a) => n + a.length, 0);
+  process.stdout.write(`ok — ${Object.keys(index).length} sections across ${c.roots.length} root${c.roots.length === 1 ? '' : 's'}, ${overridden.size} scope override${overridden.size === 1 ? '' : 's'}, ${learn.length} learnings (${learn.filter(l => l.status === 'active').length} active)${nEx ? ` · ${nEx} file${nEx === 1 ? '' : 's'} excluded by root globs` : ''}\n`);
 }
 
 // vet — the capture gate as arithmetic: candidate statements in (stdin JSON array of strings or {statement}),
@@ -435,8 +437,8 @@ function cmdScoreboard() {
   process.stdout.write(`${config.rel(c.scoreboardPath)} rebuilt — ${Object.keys(per_source).length} sources, ${Object.keys(per_fingerprint).length} fingerprint classes (derived; gitignore ${config.rel(path.dirname(c.scoreboardPath))}/)\n`);
 }
 
-function main() {
-  const [sub, ...rest] = process.argv.slice(2);
+function main(argv = process.argv.slice(2)) {
+  const [sub, ...rest] = argv;
   const args = parseArgs(rest);
   switch (sub) {
     case 'init': return cmdInit(args);
@@ -458,6 +460,9 @@ function main() {
   }
 }
 
+// Embeddable entry (first-consumer brief, 2026-08-29): a domain-pack consumer's launcher can
+// require this file and call main(argv) in-process instead of paying a node startup per command.
+module.exports = { main };
 if (require.main === module) {
   process.stdout.on('error', (e) => { if (e && e.code === 'EPIPE') process.exit(0); throw e; });
   main();

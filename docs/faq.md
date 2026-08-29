@@ -50,6 +50,10 @@ Probably not. Every pack field can live inline in `akela.json`; the `default` pa
 
 Almost always a naming mismatch: the agent passed the name it *invoked* (a command, a skill) instead of the activity name your scopes use. Since 0.1.3 an empty compile warns loudly on stderr and lists the known scope tokens; if your tool's command names carry a prefix, set `aliasPrefixes` (e.g. `["qa-"]`) and the prefix is stripped deterministically, with a visible `activity alias:` notice.
 
+### Can two knowledge roots share a namespace? And what about non-knowledge files inside a root?
+
+One root per namespace — the refusal is deliberate, since the namespace prefixes every section id. Teams with multiple methodology directories give each its own namespace: `{ "path": "pay-docs", "namespace": "PAY" }` and `{ "path": "ops-docs", "namespace": "OPS" }` — ids stay unambiguous and scopes can still be shared words. And if a root contains files that aren't knowledge (vendored code, generated output), exclude them with root-relative globs: `"exclude": ["engine/**"]` — skipped at index time, listed by `akela check --json`, never silently.
+
 ### What's the footprint?
 
 ~1,600 lines of plain Node, zero dependencies, no build step, no service, no database. `npm publish`-to-`node` with nothing in between: what's published is what runs.

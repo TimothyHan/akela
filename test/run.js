@@ -153,6 +153,14 @@ function testLogAndStats() {
     p.run(['log', 'applied', 'REF-playwright-patterns#never']);
     p.run(['log', 'outcome', '--status', 'DONE']);
     check(/already reported an outcome/.test(p.fails(['log', 'applied', 'LRN-20260808-03']) || ''), 'a run is closed by its outcome — later events refused');
+    // boundary tests ported from the first consumer's suite (2026-08-29)
+    const closedMsg = p.fails(['log', 'applied', 'LRN-20260808-03']) || '';
+    check(/DONE/.test(closedMsg) && /run-id --activity/.test(closedMsg), 'the closed-run refusal names the outcome and says how to open a new run');
+    check(/requires --note/.test(p.fails(['log', 'contradicted', 'LRN-20260808-03']) || ''), 'argument validation still wins over the closed-run check');
+    const nBefore = fs.readFileSync(path.join(p.tmp, 'kb', 'learnings-log.jsonl'), 'utf8').trim().split('\n').length;
+    p.fails(['log', 'applied', 'LRN-20260808-03']);
+    check(fs.readFileSync(path.join(p.tmp, 'kb', 'learnings-log.jsonl'), 'utf8').trim().split('\n').length === nBefore, 'a refused append writes nothing');
+    check(/already reported an outcome/.test(p.fails(['log', 'outcome', '--status', 'DONE']) || ''), 'a second outcome on the same run is refused');
     check(/requires --status <DONE\|/.test(p.fails(['log', 'outcome'], { AKELA_RUN: 'r2' }) || ''), 'outcome statuses come from the pack');
     for (const r of ['r2', 'r3', 'r4']) { p.run(['log', 'applied', 'LRN-20260808-09'], { AKELA_RUN: r }); p.run(['log', 'outcome', '--status', 'DONE'], { AKELA_RUN: r }); }
     const lines = fs.readFileSync(path.join(p.tmp, 'kb', 'learnings-log.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l));
@@ -253,6 +261,58 @@ function testGeneric() {
       const declared = al.run(['compile', '--activity', 'qa-review', '--task', 'T-5']);
       check(!/activity alias:/.test(declared) && al.manifest(path.join(al.tmp, declared.split('\n')[0])).ids.includes('WIKI-tone#review-rule'), 'a declared activity that happens to carry a prefix is never treated as an alias');
     } finally { al.rm(); }
+
+    // more first-consumer boundary tests (2026-08-29)
+    const fb = project({ domain: 'default', knowledge: [{ path: 'wiki', namespace: 'WIKI' }] },
+      { 'wiki/r.md': '# R\n<!-- akela: scope=work tier=must -->\n\n## Rule\n<!-- akela: id=rule -->\nDo the thing.\n' });
+    try {
+      // two contradictions in ONE run, then applied later in another → criterion (a) must not fire
+      fb.run(['log', 'contradicted', 'WIKI-r#rule', '--note', 'n1'], { AKELA_RUN: 'c1', AKELA_TS: '2026-09-01T00:00:00Z' });
+      fb.run(['log', 'contradicted', 'WIKI-r#rule', '--note', 'n2'], { AKELA_RUN: 'c1', AKELA_TS: '2026-09-01T00:00:01Z' });
+      fb.run(['log', 'applied', 'WIKI-r#rule'], { AKELA_RUN: 'a1', AKELA_TS: '2026-09-02T00:00:00Z' });
+      check(JSON.parse(fb.run(['stats', '--json'])).rows.find(r => r.src === 'WIKI-r#rule').falsified === false, 'contradicted ≥2 with a LATER applied is NOT falsified');
+      const fb2 = project({ domain: 'default', knowledge: [{ path: 'wiki', namespace: 'WIKI' }] },
+        { 'wiki/r.md': '# R\n<!-- akela: scope=work tier=must -->\n\n## Rule\n<!-- akela: id=rule -->\nDo the thing.\n' });
+      try {
+        fb2.run(['log', 'contradicted', 'WIKI-r#rule', '--note', 'n1'], { AKELA_RUN: 'c1', AKELA_TS: '2026-09-01T00:00:00Z' });
+        fb2.run(['log', 'contradicted', 'WIKI-r#rule', '--note', 'n2'], { AKELA_RUN: 'c1', AKELA_TS: '2026-09-01T00:00:01Z' });
+        check(JSON.parse(fb2.run(['stats', '--json'])).rows.find(r => r.src === 'WIKI-r#rule').falsified === true, 'the same contradictions with NO later applied are falsified');
+      } finally { fb2.rm(); }
+      // run reuse (via compile's marker check): same activity+task → same run; different task → fresh run
+      const r1 = fb.run(['compile', '--activity', 'work', '--task', 'K-1']).split('\n')[0];
+      const r2 = fb.run(['compile', '--activity', 'work', '--task', 'K-1']).split('\n')[0];
+      const r3 = fb.run(['compile', '--activity', 'work', '--task', 'K-2']).split('\n')[0];
+      check(r1 === r2 && r1 !== r3, 'compile reuses the run for the same activity+task and starts fresh for a new task');
+      check(fs.existsSync(path.join(fb.tmp, path.dirname(r3), 'profile.json')), 'a fresh run gets its own profile');
+      // EPIPE: a consumer that closes stdout early must not crash (posix only — sh pipeline)
+      if (process.platform !== 'win32') {
+        const piped = require('child_process').spawnSync('sh', ['-c', `${JSON.stringify(process.execPath)} ${JSON.stringify(BIN)} stats | head -1`], { env: { ...process.env, AKELA_CWD: fb.tmp }, encoding: 'utf8' });
+        check(piped.status === 0, 'stdout closed early (| head) does not crash');
+      }
+      // embeddable entry: main is exported and callable
+      check(typeof require(BIN).main === 'function', 'bin exports main() for in-process embedding');
+    } finally { fb.rm(); }
+
+    // exclude globs: vendored non-knowledge inside a knowledge root is skipped, visibly
+    const ex = project({ domain: 'default', knowledge: [{ path: 'wiki', namespace: 'WIKI', exclude: ['vendor/**'] }] },
+      { 'wiki/r.md': '# R\n<!-- akela: scope=work tier=must -->\n\n## Rule\n<!-- akela: id=rule -->\ntext\n',
+        'wiki/vendor/engine/DESIGN.md': '# Vendored\n\n## Untagged heading\nwould refuse indexing\n' });
+    try {
+      check(/WIKI-r#rule/.test(ex.run(['index'])) && !/vendor/.test(ex.run(['index'])), 'excluded files are skipped at index time');
+      const cj = JSON.parse(ex.run(['check', '--json']));
+      check(cj.ok === true && cj.excluded && cj.excluded.WIKI.includes('vendor/engine/DESIGN.md'), 'check --json lists what the globs excluded — never silent');
+    } finally { ex.rm(); }
+
+    // ~/ expansion: a committed config with a home-relative knowledge path travels between machines
+    if (process.platform !== 'win32') {
+      const home = fs.mkdtempSync(path.join(require('os').tmpdir(), 'akela-home-'));
+      fs.mkdirSync(path.join(home, 'kb'));
+      fs.writeFileSync(path.join(home, 'kb', 'r.md'), '# R\n<!-- akela: scope=work tier=must -->\n\n## Rule\n<!-- akela: id=rule -->\ntext\n');
+      const hm = project({ domain: 'default', knowledge: [{ path: '~/kb', namespace: 'KB' }] }, {});
+      try {
+        check(/KB-r#rule/.test(hm.run(['index'], { HOME: home })), 'a leading ~/ in knowledge paths expands against the home directory');
+      } finally { hm.rm(); fs.rmSync(home, { recursive: true, force: true }); }
+    }
 
     // init
     const q = project(null, { 'docs/a.md': '# A\n\n## One\ntext\n' });

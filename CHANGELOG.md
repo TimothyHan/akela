@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.4 — 2026-08-29
+
+Findings from the first real consumer: QABuddy deleted its in-tree engine,
+became a domain-pack consumer, and now runs its full 1,275-check suite against
+Akela in CI. These are the gaps a first consumer should find pre-1.0.
+
+- **Embeddable CLI entry**: `bin/akela.js` exports `main(argv)` — a consumer's
+  launcher can delegate in-process instead of paying a node startup per command.
+- **`~/` expansion** in `domain`, `knowledge[].path`, `learnings`, `runs` — a
+  committed config with per-user install paths now travels between machines.
+- **`knowledge[].exclude`** (root-relative globs, e.g. `["engine/**"]`):
+  non-knowledge files vendored inside a knowledge root are skipped at index
+  time and listed by `akela check --json` — visible, never silent.
+- **Boundary tests ported from the consumer suite**: falsified-vs-reapplied
+  ordering, closed-run refusal details (names the outcome, says how to open a
+  new run, validation wins, refused appends write nothing, second outcome
+  refused), EPIPE survival under `| head`, run reuse per activity+task.
+- **Windows in CI**: the matrix now covers ubuntu + windows × Node 18/20/22/24.
+- Docs: `docs/embedding.md` (the consumer pattern, with QABuddy as the worked
+  reference) and FAQ entries for namespaces and excludes.
+- 13 new tests · **139 total** · engine still zero dependencies.
+
 ## 0.1.3 — 2026-08-28
 
 An empty slice is a naming problem until proven otherwise.

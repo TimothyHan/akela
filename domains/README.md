@@ -26,7 +26,8 @@ Every pack field can be declared **inline in `akela.json`**, and inline values o
 2. **Second project in the same domain:** extract those fields into a JSON file and point at it —
    `"domain": "./ops-pack.json"` (any path works; built-in names resolve to this folder).
 3. **Building a tool on top of Akela:** ship your pack with your tool, so your users get a
-   configured domain without ever seeing these fields.
+   configured domain without ever seeing these fields. See `docs/embedding.md` for the full
+   consumer pattern (launcher, aliases, `~/` paths, excludes).
 
 The ownership rule behind the ladder: **a pack belongs to the domain that defines it, not to the
 engine.** That's why this folder contains only `default.json`.

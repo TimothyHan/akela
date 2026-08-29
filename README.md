@@ -73,7 +73,7 @@ The division is the design: **the agent drives everything except judgment; you s
 
 ## How it fits together
 
-For the full picture in diagrams — the evidence loop, selection, a rule's life, and how retrieved notes graduate — see [docs/how-akela-works.md](docs/how-akela-works.md). For day-to-day usage (tagging, the agent protocol, the curation routine) see [docs/guide.md](docs/guide.md). Quick answers to first-use questions: [docs/faq.md](docs/faq.md).
+For the full picture in diagrams — the evidence loop, selection, a rule's life, and how retrieved notes graduate — see [docs/how-akela-works.md](docs/how-akela-works.md). For day-to-day usage (tagging, the agent protocol, the curation routine) see [docs/guide.md](docs/guide.md). Quick answers to first-use questions: [docs/faq.md](docs/faq.md). Shipping Akela inside your own tool: [docs/embedding.md](docs/embedding.md).
 
 ```
  your markdown (wiki / references)          ← you author; Akela indexes
