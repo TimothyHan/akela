@@ -66,7 +66,7 @@ function testQaParity() {
     check(tiers.lastIndexOf('must') < (tiers.findIndex(t => t !== 'must') === -1 ? Infinity : tiers.findIndex(t => t !== 'must')), 'every must section packed before any non-must');
     check(c.ids[c.ids.indexOf('REF-playwright-patterns#must-rules') + 1] === 'LRN-20260801-01', 'learning packed right after the section it Overrides');
     // verbatim body incl. the LAST section of a file
-    const src = fs.readFileSync(path.join(REFS, 'playwright-patterns.md'), 'utf8').split('\n');
+    const src = fs.readFileSync(path.join(REFS, 'playwright-patterns.md'), 'utf8').replace(/\r\n/g, '\n').split('\n'); // normalize like the engine does — a CRLF checkout (windows autocrlf) must not fail the verbatim compare
     const h = index['REF-playwright-patterns#pitfalls'].heading;
     const j0 = src.findIndex(l => l.replace(/^#+\s*/, '').trim() === h);
     const expectedLast = src.slice(j0 + 1).filter(l => !/^<!--\s*(qab|akela):/.test(l)).join('\n').trim();
