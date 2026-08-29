@@ -2,6 +2,8 @@
 
 **A deterministic compiler over rectified context.**
 
+**한국어: [README-ko.md](README-ko.md)**
+
 [![tests](https://github.com/TimothyHan/akela/actions/workflows/ci.yml/badge.svg)](https://github.com/TimothyHan/akela/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/akela)](https://www.npmjs.com/package/akela) ![node](https://img.shields.io/badge/node-%E2%89%A518-brightgreen) ![deps](https://img.shields.io/badge/dependencies-0-brightgreen)
 
 Akela is a **context compiler** for AI agents: it turns your existing markdown knowledge base — a wiki, a references folder, a team playbook — into a bounded, reproducible context slice per task, and uses evidence from agent runs to govern what that knowledge becomes.
