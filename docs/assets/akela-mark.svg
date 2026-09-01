@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Akela">
+  <style>
+    path { fill: #22242c; }
+    @media (prefers-color-scheme: dark) { path { fill: #e8e9ec; } }
+  </style>
+  <path fill="#8b8d98" fill-rule="evenodd" d="M10 6 L23 16 L32 12 L41 16 L54 6 L56 22 L50 32 L56 40 L46 42 L40 52 L32 60 L24 52 L18 42 L8 40 L14 32 L8 22 Z M18 26 L27 29 L22 33 Z M46 26 L37 29 L42 33 Z"/>
+</svg>

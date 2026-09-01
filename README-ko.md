@@ -1,6 +1,10 @@
+<img src="docs/assets/akela-mark.svg" alt="Akela" width="56" height="56">
+
 # Akela
 
 **A deterministic compiler over rectified context — 정제된 컨텍스트의 결정론적 컴파일러.**
+
+**[웹사이트](https://timothyhan.github.io/akela/ko/)** · **English: [README.md](README.md)**
 
 [![tests](https://github.com/TimothyHan/akela/actions/workflows/ci.yml/badge.svg)](https://github.com/TimothyHan/akela/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/akela)](https://www.npmjs.com/package/akela) ![node](https://img.shields.io/badge/node-%E2%89%A518-brightgreen) ![deps](https://img.shields.io/badge/dependencies-0-brightgreen)
 
